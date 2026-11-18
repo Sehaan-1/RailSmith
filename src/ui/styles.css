@@ -529,28 +529,55 @@ h2 { margin: 0; }
   text-overflow: ellipsis;
 }
 
-/* Health pill select, color-coded by state */
-.health {
-  flex: none;
-  height: 22px;
-  padding: 0 20px 0 9px;
-  border: 1px solid transparent;
+/* Breaker signal controls and derived health status */
+.breaker-controls { flex: none; display: flex; align-items: center; gap: 3px; }
+.health-state {
+  min-width: 34px;
+  padding: 4px 5px;
   border-radius: 999px;
-  appearance: none;
-  background-color: var(--well);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 6px center;
   font-family: var(--mono);
-  font-size: 8.5px;
+  font-size: 8px;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  cursor: pointer;
+  letter-spacing: 0.04em;
+  text-align: center;
 }
-.health.healthy { color: var(--accent-text); background-color: var(--accent-soft); }
-.health.degraded { color: var(--warning-text); background-color: var(--warning-soft); }
-.health.circuit_open { color: var(--danger-text); background-color: var(--danger-soft); }
-.health:focus-visible { outline: none; border-color: currentColor; }
+.health-state.healthy { color: var(--accent-text); background: var(--accent-soft); }
+.health-state.circuit_open { color: var(--danger-text); background: var(--danger-soft); }
+.signal {
+  min-width: 24px;
+  height: 22px;
+  padding: 0 4px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  font-family: var(--mono);
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--text-faint);
+  transition: color 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+.signal.fail:hover { color: var(--danger-text); border-color: var(--danger); background: var(--danger-soft); }
+.signal.pass:hover { color: var(--accent-text); border-color: var(--accent); background: var(--accent-soft); }
+.signal:focus-visible, .breaker-reset:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+.breaker-reset { padding: 3px 6px; border-radius: 5px; color: var(--text-faint); font-family: var(--mono); font-size: 8px; font-weight: 700; }
+.breaker-reset:hover { color: var(--text-strong); background: var(--well); }
+.failover-banner {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--danger);
+  background: var(--danger-soft);
+  color: var(--danger-text);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.failover-banner.promoted { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-text); }
+.failover-banner small { margin-left: auto; color: var(--text-faint); font-weight: 500; letter-spacing: 0; }
 
 .sidebar-foot {
   display: flex;
