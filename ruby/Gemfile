@@ -5,6 +5,7 @@ source 'https://rubygems.org'
 ruby '>= 3.1'
 
 gem 'sorbet-runtime', '~> 0.5'
+gem 'webrick', '~> 1.9' # only used by the optional HTTP front door (lib/railsmith/api.rb)
 
 group :development, :test do
   gem 'minitest', '~> 5.25'

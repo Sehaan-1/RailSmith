@@ -108,3 +108,30 @@ Enum/struct serialization round-trips:
 graph = RailSmith::Fixtures.demo_graph
 graph.edges_from('us').map(&:total_fee_cents) # per-rail fees, integer cents
 ```
+
+## HTTP API (optional front door)
+
+A thin WEBrick JSON server exposes the engine to the React workbench
+(`../src/ui`). It is loaded explicitly (`require 'railsmith/api'`), so
+the core engine never depends on a web stack:
+
+```
+bundle exec ruby bin/railsmith-api   # listens on 0.0.0.0:8080 (PORT to override)
+```
+
+| Endpoint | Body | Returns |
+| --- | --- | --- |
+| `GET /api/health` | — | `{ ok, engine }` probe the UI uses to pick its engine |
+| `GET /api/graph` | — | demo nodes + edges, TS field names |
+| `POST /api/route` | `sourceNodeId, targetNodeId, amountCents, hourUtc, speedWeight, edges?` | `{ optimal, runnerUp, exclusions }` |
+| `POST /api/net` | `transfers[]` | `{ summaries, settlements, totals }` |
+| `POST /api/ledger` | `id, sourceNodeId, targetNodeId, amountCents, currency, edgeIds[]` | `{ postings, balanced, totals }` |
+
+The API is stateless: `/api/route` accepts the caller's current rail
+health as an edge overlay and validates it through the Stage 1 graph
+invariants, so UI and engine can never drift apart. Field names and
+enum serializations are the TypeScript ones (`DEBIT`, `HEALTHY`,
+`eu ↔ us · USD`), so the UI falls back to its bundled TS engine
+without any mapping layer. With the Vite dev server running, `/api`
+is proxied to port 8080 automatically — run `npm run dev` and
+`npm run engine` side by side.
