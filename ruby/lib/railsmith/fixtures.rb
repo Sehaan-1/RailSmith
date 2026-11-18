@@ -15,6 +15,28 @@ module RailSmith
       Graph.new(nodes: nodes, edges: edges)
     end
 
+    # The 120-instruction batch the UI workbench nets: 60 USD
+    # transfers us -> eu against 60 eu -> us, grossing $2.4M and
+    # compressing to a single $340k us -> eu settlement (~85.8%).
+    sig { returns(T::Array[TransferIntent]) }
+    def self.demo_transfers
+      (0...120).map do |i|
+        outbound = i.even?
+        amount_cents = if outbound
+          i < 40 ? 2_283_334 : 2_283_333
+        else
+          i < 40 ? 1_716_666 : 1_716_667
+        end
+        TransferIntent.new(
+          id: "batch-#{i}",
+          source_node: outbound ? 'us' : 'eu',
+          target_node: outbound ? 'eu' : 'us',
+          amount_cents: amount_cents,
+          currency: Currency::USD
+        )
+      end
+    end
+
     sig { returns(T::Array[AccountNode]) }
     def self.nodes
       [
