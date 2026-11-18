@@ -26,7 +26,8 @@ Later stages build on it:
 lib/railsmith/
   currency.rb       Currency enum (USD, EUR, GBP, MXN, INR, USDC)
   account_kind.rb   AccountKind enum (bank account, treasury hub, wallet)
-  rail_kind.rb      RailKind enum (ACH, SEPA, WIRE, FX_HUB, STABLECOIN_*)
+  rail_kind.rb      RailKind enum: ACH, SEPA, WIRE (SWIFT wire),
+                    FX_HUB (FX swap), STABLECOIN_MINT/BURN (bridge)
   rail_health.rb    RailHealth enum (HEALTHY, DEGRADED, CIRCUIT_OPEN)
   account_node.rb   AccountNode T::Struct (immutable)
   rail_edge.rb      RailEdge T::Struct + fee/latency/cutoff math
