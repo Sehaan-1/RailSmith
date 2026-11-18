@@ -21,6 +21,10 @@ require_relative 'railsmith/route_exclusion'
 require_relative 'railsmith/route_quote'
 require_relative 'railsmith/route_result'
 require_relative 'railsmith/graph_router'
+require_relative 'railsmith/posting_direction'
+require_relative 'railsmith/ledger_posting'
+require_relative 'railsmith/ledger_generator'
+require_relative 'railsmith/circuit_breaker'
 require_relative 'railsmith/fixtures'
 
 # RailSmith: a Sorbet-typed multi-rail payment & FX graph engine,
