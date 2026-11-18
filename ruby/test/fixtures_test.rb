@@ -41,6 +41,15 @@ class FixturesTest < Minitest::Test
     assert_empty @graph.edges_from('mx')
   end
 
+  def test_demo_transfer_batch
+    transfers = RailSmith::Fixtures.demo_transfers
+    assert_equal 120, transfers.size
+    assert(transfers.all? { |t| t.currency == RailSmith::Currency::USD })
+    assert_equal 2_283_334, transfers.first.amount_cents
+    assert_equal 1_716_666, transfers[1].amount_cents
+    assert_equal 'batch-0', transfers.first.id
+  end
+
   # The requirements call for ACH, SEPA, SWIFT wire, FX swap and
   # stablecoin bridge corridors, each represented as RailEdge
   # objects. Every one of those families has live edges in the demo

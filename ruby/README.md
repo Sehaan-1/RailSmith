@@ -7,13 +7,13 @@ payment corridors (ACH, SEPA, wire, FX swap, stablecoin mint/burn)
 are directed, weighted edges with fixed fees, basis-point spreads,
 settlement latency and daily cutoff windows.
 
-This directory currently holds **Stage 1 — the typed graph schema**.
-Later stages build on it:
+This directory currently holds **Stage 1 (typed graph schema)** and
+**Stage 2 (flow compression)**. Later stages build on them:
 
-1. **Typed graph schema** — `AccountNode` / `RailEdge` structs, enums,
+1. **Typed graph schema** (done) — `AccountNode` / `RailEdge` structs, enums,
    and a `Graph` container that validates corridor invariants up front.
-2. **Flow compression** — bilateral netting of opposing obligations
-   before any transfer touches an external bank.
+2. **Flow compression** (done) — `BilateralNetter` cancels opposing
+   obligations per corridor before any transfer touches an external bank.
 3. **Cost vs. speed routing** — constrained Dijkstra over a composite
    edge weight (`alpha * fee_cents + beta * settlement_minutes`),
    including hybrid fiat → stablecoin bridges.
@@ -31,8 +31,14 @@ lib/railsmith/
   rail_health.rb    RailHealth enum (HEALTHY, DEGRADED, CIRCUIT_OPEN)
   account_node.rb   AccountNode T::Struct (immutable)
   rail_edge.rb      RailEdge T::Struct + fee/latency/cutoff math
+  transfer_intent.rb    TransferIntent T::Struct (one instruction)
+  bilateral_netter.rb   Stage 2: corridor grouping + cancellation
+  netting_summary.rb    Per-corridor netting outcome
+  compressed_settlement.rb  The surviving net movement per corridor
+  netting_result.rb     Summaries + settlements + aggregate totals
   graph.rb          Graph container: adjacency, lookups, invariants
-  fixtures.rb       The 10-node / 22-rail demo network (matches the UI)
+  fixtures.rb       The 10-node / 22-rail demo network and the
+                    120-instruction netting batch (match the UI)
 test/               Minitest suite
 ```
 
@@ -51,7 +57,14 @@ test/               Minitest suite
   circuit breakers and giving Stage 4 a degraded-but-routable state.
 - **Fail-fast construction.** `Graph#add_edge` rejects duplicate ids,
   unknown endpoints, negative fees, out-of-range spreads/cutoffs and
-  non-positive latency/rates at build time.
+  non-positive latency/rates at build time. `BilateralNetter` likewise
+  rejects negative amounts and self-transfers before grouping.
+- **Compression is basis points too.** Netting compression is stored
+  as integer bps (8583 = 85.83%), never a float percentage;
+  `compression_pct` exists for display only.
+- **Corridor strings match the UI** (`eu ↔ us · USD`), and netting is
+  pure over `TransferIntent`s — no graph dependency, so compression
+  runs before routing.
 
 ## Verify
 
