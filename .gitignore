@@ -6,3 +6,6 @@ dist/
 # Ruby engine
 .bundle/
 vendor/bundle/
+
+# AI assistant configuration (local only)
+.claude/
