@@ -1,0 +1,68 @@
+# RailSmith engine (Ruby + Sorbet)
+
+A Sorbet-typed multi-rail payment & FX graph engine, modeled on the
+architecture of Stripe's Global Payments and Treasury Network
+(GPTN). Accounts, treasury FX hubs and stablecoin wallets are nodes;
+payment corridors (ACH, SEPA, wire, FX swap, stablecoin mint/burn)
+are directed, weighted edges with fixed fees, basis-point spreads,
+settlement latency and daily cutoff windows.
+
+This directory currently holds **Stage 1 — the typed graph schema**.
+Later stages build on it:
+
+1. **Typed graph schema** — `AccountNode` / `RailEdge` structs, enums,
+   and a `Graph` container that validates corridor invariants up front.
+2. **Flow compression** — bilateral netting of opposing obligations
+   before any transfer touches an external bank.
+3. **Cost vs. speed routing** — constrained Dijkstra over a composite
+   edge weight (`alpha * fee_cents + beta * settlement_minutes`),
+   including hybrid fiat → stablecoin bridges.
+4. **Resilience & reconciliation** — per-rail circuit breakers with
+   automatic failover, and balanced double-entry records.
+
+## Layout
+
+```
+lib/railsmith/
+  currency.rb       Currency enum (USD, EUR, GBP, MXN, INR, USDC)
+  account_kind.rb   AccountKind enum (bank account, treasury hub, wallet)
+  rail_kind.rb      RailKind enum (ACH, SEPA, WIRE, FX_HUB, STABLECOIN_*)
+  rail_health.rb    RailHealth enum (HEALTHY, DEGRADED, CIRCUIT_OPEN)
+  account_node.rb   AccountNode T::Struct (immutable)
+  rail_edge.rb      RailEdge T::Struct + fee/latency/cutoff math
+  graph.rb          Graph container: adjacency, lookups, invariants
+  fixtures.rb       The 10-node / 22-rail demo network (matches the UI)
+test/               Minitest suite
+```
+
+## Design decisions
+
+- **Integer math everywhere.** Money is integer cents, spreads are
+  integer basis points, FX rates are scaled by 1e6, and latency is
+  integer **milliseconds** — the starter sketch's `latency_minutes`
+  would round a 22.5s stablecoin hop down to zero.
+- **Enums, not symbols/strings.** `RailKind`, `RailHealth`,
+  `AccountKind` and `Currency` are `T::Enum`s whose serialization
+  matches the TypeScript engine (`src/types/railsmith.ts`), so the
+  UI and the Ruby engine can share payloads later.
+- **Three-state health.** The starter sketch's `healthy` boolean
+  became `RailHealth::Healthy/Degraded/CircuitOpen`, matching the UI's
+  circuit breakers and giving Stage 4 a degraded-but-routable state.
+- **Fail-fast construction.** `Graph#add_edge` rejects duplicate ids,
+  unknown endpoints, negative fees, out-of-range spreads/cutoffs and
+  non-positive latency/rates at build time.
+
+## Verify
+
+```
+bundle install
+bundle exec srb tc   # static typecheck
+bundle exec rake     # minitest suite
+```
+
+Enum/struct serialization round-trips:
+
+```ruby
+graph = RailSmith::Fixtures.demo_graph
+graph.edges_from('us').map(&:total_fee_cents) # per-rail fees, integer cents
+```

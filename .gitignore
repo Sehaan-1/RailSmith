@@ -2,3 +2,7 @@ node_modules/
 dist/
 *.tsbuildinfo
 .env*
+
+# Ruby engine
+.bundle/
+vendor/bundle/
