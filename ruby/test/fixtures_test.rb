@@ -40,4 +40,20 @@ class FixturesTest < Minitest::Test
     assert_equal 1, @graph.edges_from('wallet').size
     assert_empty @graph.edges_from('mx')
   end
+
+  # The requirements call for ACH, SEPA, SWIFT wire, FX swap and
+  # stablecoin bridge corridors, each represented as RailEdge
+  # objects. Every one of those families has live edges in the demo
+  # graph (SWIFT wire -> Wire, FX swap -> FxHub, bridge -> mint/burn).
+  def test_every_required_corridor_family_is_represented
+    kinds = @graph.edges.map(&:rail_kind).uniq
+    [
+      RailSmith::RailKind::ACH,
+      RailSmith::RailKind::SEPA,
+      RailSmith::RailKind::Wire,
+      RailSmith::RailKind::FxHub,
+      RailSmith::RailKind::StablecoinMint,
+      RailSmith::RailKind::StablecoinBurn
+    ].each { |kind| assert_includes kinds, kind }
+  end
 end
