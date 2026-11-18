@@ -83,6 +83,21 @@ class ApiTest < Minitest::Test
     assert_equal 14_000_000, data['totals']['savedVolumeCents']
   end
 
+  def test_circuit_breaker_opens_and_recovers_from_reported_outcomes
+    failures = Array.new(5) { { edgeId: 'sepa-fps-direct', failed: true } }
+    opened = JSON.parse(post('/api/circuit-breaker', { outcomes: failures }).body)
+    assert_equal ['sepa-fps-direct'], opened['openEdgeIds']
+    assert_equal 5, opened['metrics']['sepa-fps-direct']['sampleCount']
+    assert_in_delta 1.0, opened['metrics']['sepa-fps-direct']['errorRate']
+
+    recovered = JSON.parse(post('/api/circuit-breaker', {
+      outcomes: failures + Array.new(15) { { edgeId: 'sepa-fps-direct', failed: false } }
+    }).body)
+    assert_empty recovered['openEdgeIds']
+    assert_equal 20, recovered['metrics']['sepa-fps-direct']['sampleCount']
+    assert_in_delta 0.25, recovered['metrics']['sepa-fps-direct']['errorRate']
+  end
+
   def test_ledger
     data = JSON.parse(post('/api/ledger', {
       id: 'tr-1', sourceNodeId: 'us', targetNodeId: 'eu', amountCents: 2_500_000,
@@ -99,6 +114,7 @@ class ApiTest < Minitest::Test
     assert_equal '400', post('/api/ledger', {
       id: 'x', sourceNodeId: 'us', targetNodeId: 'eu', amountCents: 1, currency: 'USD', edgeIds: ['nope']
     }).code
+    assert_equal '400', post('/api/circuit-breaker', { outcomes: [{ edgeId: 'nope', failed: true }] }).code
     assert_equal '400', post('/api/net', {
       transfers: [{ id: 't', sourceNodeId: 'a', targetNodeId: 'b', amountCents: 1, currency: 'NOPE' }]
     }).code

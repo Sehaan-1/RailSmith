@@ -1,6 +1,7 @@
 import {route as routeLocal} from './dijkstraRouter';
 import {netTransfers} from './bilateralNetter';
 import {generateLedger} from './ledgerGenerator';
+import {evaluateCircuitBreaker, type CircuitBreakerSnapshot, type CircuitOutcome} from './circuitBreaker';
 import type {LedgerPosting,NettingSummary,RailEdge,RouteQuote,TransferIntent} from '../types/railsmith';
 
 /**
@@ -60,4 +61,17 @@ export async function engineLedger(intent:TransferIntent,path:readonly RailEdge[
   }catch{markOffline()}
  }
  return{mode:'typescript',postings:generateLedger(intent,path)};
+}
+
+export interface EngineCircuitBreaker extends CircuitBreakerSnapshot {mode:EngineMode}
+
+/** Replays the current signal history through the Ruby breaker, with an equivalent local fallback. */
+export async function engineCircuitBreaker(outcomes:readonly CircuitOutcome[],edges:readonly RailEdge[]):Promise<EngineCircuitBreaker>{
+ if(await engineAvailable()){
+  try{
+   const data=await post<CircuitBreakerSnapshot>('/api/circuit-breaker',{outcomes});
+   return{mode:'ruby',...data};
+  }catch{markOffline()}
+ }
+ return{mode:'typescript',...evaluateCircuitBreaker(outcomes,edges.map(edge=>edge.id))};
 }
