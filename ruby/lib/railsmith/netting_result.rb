@@ -6,6 +6,8 @@ module RailSmith
   # compressed settlements to dispatch, with aggregate totals for
   # the "cash movement eliminated" headline metric.
   class NettingResult < T::Struct
+    extend T::Sig
+
     const :summaries, T::Array[NettingSummary]
     const :settlements, T::Array[CompressedSettlement]
 

@@ -17,6 +17,8 @@ module RailSmith
   # `health` is mutable on purpose: Stage 4's circuit breakers trip
   # it at runtime while the corridor's economics stay frozen.
   class RailEdge < T::Struct
+    extend T::Sig
+
     const :id, String
     const :from_node, String
     const :to_node, String
