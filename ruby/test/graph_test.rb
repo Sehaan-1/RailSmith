@@ -36,6 +36,8 @@ class GraphTest < Minitest::Test
     assert_equal 2, g.nodes.size
     assert_equal 'A', g.node('a')&.label
     assert_nil g.node('nope')
+    assert_equal 'a-b', g.edge('a-b')&.id
+    assert_nil g.edge('nope')
     assert_equal ['a-b'], g.edges_from('a').map(&:id)
     assert_empty g.edges_from('b')
     assert_equal ['a-b'], g.edges_to('b').map(&:id)

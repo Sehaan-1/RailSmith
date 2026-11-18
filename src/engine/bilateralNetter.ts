@@ -21,7 +21,7 @@ export function netTransfers(transfers: readonly TransferIntent[]): NettingResul
   for (const [key, g] of groups) {
     const gross = g.lowToHigh + g.highToLow, net = Math.abs(g.lowToHigh - g.highToLow);
     const saved = gross - net;
-    summaries.push({ corridor: `${g.low} ↔ ${g.high} · ${g.currency}`, grossVolumeCents: gross, nettedMovementCents: net, savedVolumeCents: saved, compressionPct: gross ? Math.round(saved * 10000 / gross) / 100 : 0 });
+    summaries.push({ corridor: `${g.low} ↔ ${g.high} · ${g.currency}`, grossVolumeCents: gross, nettedMovementCents: net, savedVolumeCents: saved, compressionPct: gross ? Math.floor(saved * 10000 / gross) / 100 : 0 });
     if (net) settlements.push({ id: `net-${key}`, sourceNodeId: g.lowToHigh > g.highToLow ? g.low : g.high, targetNodeId: g.lowToHigh > g.highToLow ? g.high : g.low, amountCents: net, currency: g.currency, corridor: `${g.low} ↔ ${g.high}` });
   }
   return { summaries, settlements };
