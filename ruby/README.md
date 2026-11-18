@@ -7,9 +7,7 @@ payment corridors (ACH, SEPA, wire, FX swap, stablecoin mint/burn)
 are directed, weighted edges with fixed fees, basis-point spreads,
 settlement latency and daily cutoff windows.
 
-This directory currently holds **Stage 1 (typed graph schema)**,
-**Stage 2 (flow compression)** and **Stage 3 (cost vs. speed
-routing)**. Later stages build on them:
+All four planned stages are implemented:
 
 1. **Typed graph schema** (done) — `AccountNode` / `RailEdge` structs, enums,
    and a `Graph` container that validates corridor invariants up front.
@@ -20,8 +18,10 @@ routing)**. Later stages build on them:
    (`fee_cents + latency_minutes * speed_weight * 10`), from
    cost-first multi-hop FX to hybrid fiat → stablecoin bridges, with
    cutoff/circuit-breaker exclusions and a runner-up failover quote.
-4. **Resilience & reconciliation** — per-rail circuit breakers with
-   automatic failover, and balanced double-entry records.
+4. **Resilience & reconciliation** (done) — `CircuitBreaker` tracks
+   live error rates per rail and trips/restores circuits so routing
+   fails over automatically; `LedgerGenerator` emits frozen, balanced
+   double-entry records per hop.
 
 ## Layout
 
@@ -44,6 +44,9 @@ lib/railsmith/
   route_quote.rb    Priced multi-hop path (integer cents + ms)
   route_result.rb   Optimal + runner-up quotes + exclusions
   route_exclusion.rb / exclusion_reason.rb  Why a rail was skipped
+  circuit_breaker.rb  Stage 4: sliding-window error rates trip circuits
+  ledger_generator.rb Stage 4: frozen balanced double-entry postings
+  ledger_posting.rb / posting_direction.rb  Journal records
   fixtures.rb       The 10-node / 22-rail demo network and the
                     120-instruction netting batch (match the UI)
 test/               Minitest suite
@@ -81,6 +84,15 @@ test/               Minitest suite
   excluded and reported on the result. The runner-up quote is the
   best route with each winning edge removed in turn — the failover
   path Stage 4 promotes.
+- **Breakers trip on evidence, recover with hysteresis.** A rail's
+  circuit opens when its sliding-window error rate (default: last 20
+  outcomes, min 5 samples) reaches 50%, and only rails the breaker
+  itself tripped are restored below 25% — an operator's manual
+  circuit-open is never resurrected.
+- **The ledger is frozen and proven balanced.** Postings are
+  immutable debit/credit pairs per hop; the per-currency invariant
+  is asserted before the journal is returned, and `balanced?` /
+  `totals` expose it for reconciliation.
 
 ## Verify
 
