@@ -186,7 +186,7 @@ module RailSmith
         amount_cents: params.fetch('amountCents'),
         currency: Currency.deserialize(params.fetch('currency'))
       )
-      postings = LedgerGenerator.generate(intent, edges)
+      postings = LedgerGenerator.generate(intent, edges, nodes: graph.nodes)
       {
         postings: postings.map do |p|
           {

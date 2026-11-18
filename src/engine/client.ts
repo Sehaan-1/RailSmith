@@ -68,14 +68,14 @@ export async function engineNet(transfers:readonly TransferIntent[]):Promise<Eng
  return{mode:'typescript',summaries:netTransfers(transfers).summaries};
 }
 
-export async function engineLedger(intent:TransferIntent,path:readonly RailEdge[]):Promise<EngineLedger>{
+export async function engineLedger(intent:TransferIntent,path:readonly RailEdge[],accounts:readonly AccountNode[]):Promise<EngineLedger>{
  if(path.length>0&&await engineAvailable()){
   try{
    const data=await post<{postings:LedgerPosting[]}>('/api/ledger',{id:intent.id,sourceNodeId:intent.sourceNodeId,targetNodeId:intent.targetNodeId,amountCents:intent.amountCents,currency:intent.currency,edgeIds:path.map(e=>e.id)});
    return{mode:'ruby',postings:data.postings};
   }catch{markOffline()}
  }
- return{mode:'typescript',postings:generateLedger(intent,path)};
+ return{mode:'typescript',postings:generateLedger(intent,path,accounts)};
 }
 
 export interface EngineCircuitBreaker extends CircuitBreakerSnapshot {mode:EngineMode}

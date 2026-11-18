@@ -17,25 +17,39 @@ class LedgerGeneratorTest < Minitest::Test
     result = @router.route(source: 'us', target: 'eu', amount_cents: @intent.amount_cents, hour_utc: 10, speed_weight: 0.15)
     postings = RailSmith::LedgerGenerator.generate(@intent, result.optimal.path_edges)
 
-    assert_equal 4, postings.size
-    assert_equal %w[tr-1:ach:debit tr-1:ach:credit tr-1:fx-sepa:debit tr-1:fx-sepa:credit], postings.map(&:id)
+    assert_equal 6, postings.size
+    assert_equal %w[
+      tr-1:ach:source-debit tr-1:ach:source-fx-credit tr-1:ach:target-fx-debit tr-1:ach:target-credit
+      tr-1:fx-sepa:debit tr-1:fx-sepa:credit
+    ], postings.map(&:id)
+    assert_equal 2_300_000, postings.find { |posting| posting.id == 'tr-1:ach:target-credit' }.amount_cents
+    assert_equal RailSmith::Currency::EUR, postings.find { |posting| posting.id == 'tr-1:ach:target-credit' }.currency
     assert postings.frozen?
     assert(postings.all?(&:frozen?))
     assert RailSmith::LedgerGenerator.balanced?(postings)
-    assert_equal({ 'USD' => { debit: 5_000_000, credit: 5_000_000 } }, RailSmith::LedgerGenerator.totals(postings))
+    assert_equal({
+      'USD' => { debit: 2_500_000, credit: 2_500_000 },
+      'EUR' => { debit: 4_600_000, credit: 4_600_000 }
+    }, RailSmith::LedgerGenerator.totals(postings))
   end
 
   def test_double_entry_directions_per_hop
     hop = @graph.edges_from('us').select { |edge| edge.id == 'ach' }
     postings = RailSmith::LedgerGenerator.generate(@intent, hop)
 
-    debit = postings.find { |p| p.direction == RailSmith::PostingDirection::Debit }
-    credit = postings.find { |p| p.direction == RailSmith::PostingDirection::Credit }
-    assert_equal 'us', debit.account_id
-    assert_equal 'fx', credit.account_id
-    assert_equal 2_500_000, debit.amount_cents
-    assert_equal 'DEBIT', debit.direction.serialize
-    assert_equal 'ach', credit.rail_edge_id
+    source_debit = postings.find { |posting| posting.id.end_with?(':source-debit') }
+    source_credit = postings.find { |posting| posting.id.end_with?(':source-fx-credit') }
+    target_debit = postings.find { |posting| posting.id.end_with?(':target-fx-debit') }
+    target_credit = postings.find { |posting| posting.id.end_with?(':target-credit') }
+    assert_equal 'us', source_debit.account_id
+    assert_equal 'fx-clearing', source_credit.account_id
+    assert_equal 'USD', source_credit.currency.serialize
+    assert_equal 2_500_000, source_debit.amount_cents
+    assert_equal 'DEBIT', source_debit.direction.serialize
+    assert_equal 2_300_000, target_debit.amount_cents
+    assert_equal 'EUR', target_debit.currency.serialize
+    assert_equal 'fx', target_credit.account_id
+    assert_equal 'ach', target_credit.rail_edge_id
   end
 
   def test_empty_path_is_empty_and_balanced
