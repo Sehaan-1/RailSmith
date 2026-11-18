@@ -6,6 +6,8 @@ module RailSmith
   # cents (fixed + spread fees for the queried amount), latency stays
   # integer milliseconds.
   class RouteQuote < T::Struct
+    extend T::Sig
+
     const :path_edges, T::Array[RailEdge]
     const :total_fee_cents, Integer
     const :total_latency_ms, Integer

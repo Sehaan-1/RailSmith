@@ -65,7 +65,7 @@ class BilateralNetterTest < Minitest::Test
       intent('t1', 'gb', 'eu', 100, RailSmith::Currency::GBP),
       intent('t2', 'us', 'eu', 100)
     ])
-    assert_equal ["gb \u2194 eu \u00b7 GBP", "eu \u2194 us \u00b7 USD"], result.summaries.map(&:corridor)
+    assert_equal ["eu \u2194 gb \u00b7 GBP", "eu \u2194 us \u00b7 USD"], result.summaries.map(&:corridor)
   end
 
   def test_invalid_transfers_raise

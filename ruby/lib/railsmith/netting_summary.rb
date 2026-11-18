@@ -8,6 +8,8 @@ module RailSmith
   # Compression is stored in basis points (85.83% == 8583) so the
   # engine stays integer-only; `compression_pct` exists for display.
   class NettingSummary < T::Struct
+    extend T::Sig
+
     const :corridor, String
     const :gross_volume_cents, Integer
     const :netted_movement_cents, Integer
