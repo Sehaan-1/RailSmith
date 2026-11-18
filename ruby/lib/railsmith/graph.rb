@@ -33,6 +33,11 @@ module RailSmith
       @nodes[id]
     end
 
+    sig { params(id: String).returns(T.nilable(RailEdge)) }
+    def edge(id)
+      @edges[id]
+    end
+
     sig { params(node: AccountNode).void }
     def add_node(node)
       raise ArgumentError, "duplicate account node id #{node.id.inspect}" if @nodes.key?(node.id)
