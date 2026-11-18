@@ -1,0 +1,4 @@
+# The stageshow skill under .claude/skills is vendored from
+# benjitaylor/skills — exclude it from GitHub's language stats so
+# the bar reflects first-party code (Ruby engine + TS/React UI).
+.claude/skills/** linguist-vendored
