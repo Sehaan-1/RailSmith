@@ -4,29 +4,35 @@ RailSmith is an interactive multi-rail payments and FX routing workbench. It mod
 
 ## Screenshots
 
-The screenshots below capture the running workbench in its TypeScript fallback mode. The same UI connects to the Ruby engine when its API is running.
+The screenshots below capture the running workbench connected to the live **Ruby engine**, as well as the offline TypeScript fallback mode.
 
-### Routing workbench
+### Live workbench (Ruby engine)
 
-Compare the optimal route with its runner-up while viewing the live settlement graph, rail health controls, cutoffs, fees, and latency.
+Connected to the Sorbet-typed Ruby API on port 8080. The engine computes constrained Dijkstra routing, quotes runner-up failovers, and balances double-entry ledgers directly from Ruby:
+
+![RailSmith routing workbench with Ruby engine](docs/screenshots/00-ruby-routing-workbench.png)
+
+### Routing workbench (TypeScript fallback)
+
+When offline, the bundled TypeScript engine takes over automatically with zero drift in graph schema or serialization:
 
 ![RailSmith routing workbench](docs/screenshots/01-routing-workbench.png)
 
 ### Circuit-breaker failover
 
-The Partner failover scenario records rail failures, opens the breaker, recomputes the route, and promotes the available alternate path.
+The Partner failover scenario records rail failures, opens the breaker, recomputes the route, and promotes the available alternate path:
 
 ![Circuit-breaker failover and runner-up promotion](docs/screenshots/02-circuit-breaker-failover.png)
 
 ### Bilateral netting
 
-Review the demo batch's gross volume, compressed settlement amount, saved cash, and compression rate.
+Review the demo batch's gross volume, compressed settlement amount, saved cash, and compression rate:
 
 ![Bilateral netting dashboard](docs/screenshots/03-bilateral-netting.png)
 
 ### FX ledger and export
 
-Inspect multi-currency double-entry postings, including FX-clearing entries, and choose CSV or JSON export.
+Inspect multi-currency double-entry postings, including FX-clearing entries, and choose CSV or JSON export:
 
 ![FX ledger with CSV and JSON export menu](docs/screenshots/04-fx-ledger-export.png)
 
@@ -46,6 +52,18 @@ Inspect multi-currency double-entry postings, including FX-clearing entries, and
 
 ## Run locally
 
+### Default: Start with the Ruby engine
+
+Start both the Ruby engine API (port 8080) and the Vite development server (port 5173) with a single command:
+
+```sh
+npm start
+```
+
+Open `http://localhost:5173` in your browser. The top-right badge will show **RUBY ENGINE** active.
+
+### Alternative: Run services separately
+
 Start the Ruby API in one terminal:
 
 ```sh
@@ -63,7 +81,7 @@ npm ci
 npm run dev
 ```
 
-Open the Vite URL printed in the terminal (normally `http://localhost:5173`). Vite proxies `/api` requests to the Ruby API. If Ruby is not running, the UI switches to the TypeScript fallback automatically.
+Open `http://localhost:5173`. Vite automatically proxies `/api` requests to the Ruby API. If Ruby is not running, the UI switches to the TypeScript fallback automatically.
 
 ## Checks
 
@@ -99,6 +117,7 @@ The Ruby service exposes these endpoints:
 
 ```text
 ruby/                 Sorbet-typed payment engine and HTTP API
+scripts/              Development startup orchestration
 src/engine/           TypeScript routing, netting, ledger, and API client
 src/ui/               React workbench and styles
 docs/screenshots/     Workbench screenshots

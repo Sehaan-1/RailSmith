@@ -1,1 +1,31 @@
-{"name":"railsmith-ui","private":true,"version":"0.1.0","type":"module","scripts":{"dev":"vite --host 0.0.0.0","engine":"ruby ruby/bin/railsmith-api","build":"tsc -b && vite build","typecheck":"tsc --noEmit"},"dependencies":{"@dagrejs/dagre":"^1.1.5","@tanstack/react-table":"^8.21.3","@tanstack/react-virtual":"^3.13.12","@xyflow/react":"^12.8.2","lucide-react":"^0.468.0","react":"^19.0.0","react-dom":"^19.0.0","zustand":"^5.0.3"},"devDependencies":{"@tailwindcss/vite":"^4.0.0","@vitejs/plugin-react":"^4.3.4","@types/react":"^19.0.0","@types/react-dom":"^19.0.0","typescript":"~5.8.2","vite":"^6.2.0"}}
+{
+    "name": "railsmith-ui",
+    "private": true,
+    "version": "0.1.0",
+    "type": "module",
+    "scripts": {
+        "start": "node scripts/start.mjs",
+        "dev": "vite --host 0.0.0.0",
+        "engine": "ruby ruby/bin/railsmith-api",
+        "build": "tsc -b && vite build",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@dagrejs/dagre": "^1.1.5",
+        "@tanstack/react-table": "^8.21.3",
+        "@tanstack/react-virtual": "^3.13.12",
+        "@xyflow/react": "^12.8.2",
+        "lucide-react": "^0.468.0",
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0",
+        "zustand": "^5.0.3"
+    },
+    "devDependencies": {
+        "@tailwindcss/vite": "^4.0.0",
+        "@vitejs/plugin-react": "^4.3.4",
+        "@types/react": "^19.0.0",
+        "@types/react-dom": "^19.0.0",
+        "typescript": "~5.8.2",
+        "vite": "^6.2.0"
+    }
+}
