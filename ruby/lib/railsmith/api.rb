@@ -16,6 +16,7 @@ module RailSmith
   #   POST /api/net       transfers[]
   #   POST /api/ledger    id, sourceNodeId, targetNodeId, amountCents,
   #                       currency, edgeIds[]
+  #   POST /api/circuit-breaker outcomes[] (edgeId, failed)
   #
   # Stateless by design: a routing request carries the caller's
   # current view of rail health as an edge overlay, validated through
@@ -60,6 +61,7 @@ module RailSmith
       @server.mount_proc('/api/route') { |req, res| handle(req, res) { |body| route_json(body) } }
       @server.mount_proc('/api/net') { |req, res| handle(req, res) { |body| net_json(body) } }
       @server.mount_proc('/api/ledger') { |req, res| handle(req, res) { |body| ledger_json(body) } }
+      @server.mount_proc('/api/circuit-breaker') { |req, res| handle(req, res) { |body| circuit_breaker_json(body) } }
     end
 
     def handle(req, res)
@@ -144,6 +146,31 @@ module RailSmith
           savedVolumeCents: result.total_saved_cents,
           compressionPct: result.compression_bps / 100.0
         }
+      }
+    end
+
+    def circuit_breaker_json(params)
+      graph = Fixtures.demo_graph
+      breaker = CircuitBreaker.new
+
+      params.fetch('outcomes').each do |outcome|
+        edge_id = outcome.fetch('edgeId')
+        raise ArgumentError, "unknown rail edge #{edge_id.inspect}" unless graph.edge(edge_id)
+
+        failed = outcome.fetch('failed')
+        unless failed == true || failed == false
+          raise ArgumentError, "outcome for #{edge_id.inspect} must have a boolean failed value"
+        end
+
+        failed ? breaker.record_failure(edge_id) : breaker.record_success(edge_id)
+        breaker.apply!(graph)
+      end
+
+      {
+        openEdgeIds: breaker.apply!(graph),
+        metrics: graph.edges.to_h do |edge|
+          [edge.id, { sampleCount: breaker.sample_count(edge.id), errorRate: breaker.error_rate(edge.id) }]
+        end
       }
     end
 
