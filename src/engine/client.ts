@@ -2,7 +2,7 @@ import {route as routeLocal} from './dijkstraRouter';
 import {netTransfers} from './bilateralNetter';
 import {generateLedger} from './ledgerGenerator';
 import {evaluateCircuitBreaker, type CircuitBreakerSnapshot, type CircuitOutcome} from './circuitBreaker';
-import type {LedgerPosting,NettingSummary,RailEdge,RouteQuote,TransferIntent} from '../types/railsmith';
+import type {AccountNode,LedgerPosting,NettingSummary,RailEdge,RouteQuote,TransferIntent} from '../types/railsmith';
 
 /**
  * Engine client. Every query tries the Ruby engine API first (proxied
@@ -25,6 +25,21 @@ export function engineAvailable():Promise<boolean>{
  return probe;
 }
 function markOffline(){probe=Promise.resolve(false)}
+
+export interface EngineGraph {mode:EngineMode;accounts:AccountNode[];edges:RailEdge[]}
+
+/** Source the visible network from Ruby when available; retain bundled fixtures as an offline fallback. */
+export async function engineGraph(fallbackAccounts:readonly AccountNode[],fallbackEdges:readonly RailEdge[]):Promise<EngineGraph>{
+ if(await engineAvailable()){
+  try{
+   const res=await fetch('/api/graph',{signal:AbortSignal.timeout(4000)});
+   if(!res.ok)throw new Error(`/api/graph answered ${res.status}`);
+   const data=await res.json() as {nodes:AccountNode[];edges:RailEdge[]};
+   return{mode:'ruby',accounts:data.nodes,edges:data.edges};
+  }catch{markOffline()}
+ }
+ return{mode:'typescript',accounts:[...fallbackAccounts],edges:[...fallbackEdges]};
+}
 async function post<T>(path:string,body:unknown):Promise<T>{
  const res=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(4000)});
  if(!res.ok)throw new Error(`${path} answered ${res.status}`);
