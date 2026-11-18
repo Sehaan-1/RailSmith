@@ -1,0 +1,9 @@
+export type CurrencyCode='USD'|'EUR'|'GBP'|'MXN'|'INR'|'USDC';
+export type RailKind='ACH'|'SEPA'|'WIRE'|'FX_HUB'|'STABLECOIN_MINT'|'STABLECOIN_BURN'|'FPS';
+export type RailHealth='HEALTHY'|'DEGRADED'|'CIRCUIT_OPEN';
+export interface AccountNode{id:string;label:string;currency:CurrencyCode;kind:'BANK_ACCOUNT'|'TREASURY_HUB'|'WALLET';region:string}
+export interface RailEdge{id:string;fromNodeId:string;toNodeId:string;railKind:RailKind;fixedFeeCents:number;spreadBps:number;fxRateScaled:number;latencyMinutes:number;cutoffHourUtc:number|null;health:RailHealth}
+export interface TransferIntent{id:string;sourceNodeId:string;targetNodeId:string;amountCents:number;currency:CurrencyCode}
+export interface RouteQuote{pathEdges:RailEdge[];totalFeeCents:number;estimatedMinutes:number;effectiveRateDisplay:string;excludedEdges:Array<{edgeId:string;reason:'CIRCUIT_OPEN'|'PAST_CUTOFF'}>}
+export interface LedgerPosting{id:string;transferId:string;accountId:string;direction:'DEBIT'|'CREDIT';amountCents:number;currency:CurrencyCode;railEdgeId:string}
+export interface NettingSummary{corridor:string;grossVolumeCents:number;nettedMovementCents:number;savedVolumeCents:number;compressionPct:number}
