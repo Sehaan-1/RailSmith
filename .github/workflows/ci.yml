@@ -16,8 +16,25 @@ jobs:
           ruby-version: '3.3'
           working-directory: ruby
           bundler-cache: true # runs bundle install against ruby/Gemfile
-      - run: bundle exec rake
+      - name: Run minitest (capture output)
+        run: |
+          set +e
+          bundle exec rake 2>&1 | tee "$RUNNER_TEMP/ruby-test.log"
+          status=${PIPESTATUS[0]}
+          exit "$status"
         working-directory: ruby
+      - name: Expose failure details as an annotation
+        if: failure()
+        run: |
+          python3 - "$RUNNER_TEMP/ruby-test.log" <<'PY'
+          import pathlib, re, sys
+          path = pathlib.Path(sys.argv[1])
+          if path.exists():
+              text = path.read_text(errors="replace")
+              text = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", text)[-10000:]
+              text = text.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+              print(f"::error title=Ruby minitest output::{text}")
+          PY
 
   ruby-sorbet:
     name: Ruby — sorbet typecheck
@@ -29,8 +46,25 @@ jobs:
           ruby-version: '3.3'
           working-directory: ruby
           bundler-cache: true
-      - run: bundle exec srb tc
+      - name: Run Sorbet (capture output)
+        run: |
+          set +e
+          bundle exec srb tc 2>&1 | tee "$RUNNER_TEMP/ruby-sorbet.log"
+          status=${PIPESTATUS[0]}
+          exit "$status"
         working-directory: ruby
+      - name: Expose failure details as an annotation
+        if: failure()
+        run: |
+          python3 - "$RUNNER_TEMP/ruby-sorbet.log" <<'PY'
+          import pathlib, re, sys
+          path = pathlib.Path(sys.argv[1])
+          if path.exists():
+              text = path.read_text(errors="replace")
+              text = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", text)[-10000:]
+              text = text.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+              print(f"::error title=Sorbet output::{text}")
+          PY
 
   ui:
     name: UI — typecheck & build
