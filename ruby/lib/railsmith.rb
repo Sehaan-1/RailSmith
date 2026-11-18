@@ -16,6 +16,11 @@ require_relative 'railsmith/compressed_settlement'
 require_relative 'railsmith/netting_result'
 require_relative 'railsmith/bilateral_netter'
 require_relative 'railsmith/graph'
+require_relative 'railsmith/exclusion_reason'
+require_relative 'railsmith/route_exclusion'
+require_relative 'railsmith/route_quote'
+require_relative 'railsmith/route_result'
+require_relative 'railsmith/graph_router'
 require_relative 'railsmith/fixtures'
 
 # RailSmith: a Sorbet-typed multi-rail payment & FX graph engine,

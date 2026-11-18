@@ -7,16 +7,19 @@ payment corridors (ACH, SEPA, wire, FX swap, stablecoin mint/burn)
 are directed, weighted edges with fixed fees, basis-point spreads,
 settlement latency and daily cutoff windows.
 
-This directory currently holds **Stage 1 (typed graph schema)** and
-**Stage 2 (flow compression)**. Later stages build on them:
+This directory currently holds **Stage 1 (typed graph schema)**,
+**Stage 2 (flow compression)** and **Stage 3 (cost vs. speed
+routing)**. Later stages build on them:
 
 1. **Typed graph schema** (done) — `AccountNode` / `RailEdge` structs, enums,
    and a `Graph` container that validates corridor invariants up front.
 2. **Flow compression** (done) — `BilateralNetter` cancels opposing
    obligations per corridor before any transfer touches an external bank.
-3. **Cost vs. speed routing** — constrained Dijkstra over a composite
-   edge weight (`alpha * fee_cents + beta * settlement_minutes`),
-   including hybrid fiat → stablecoin bridges.
+3. **Cost vs. speed routing** (done) — `GraphRouter` runs constrained
+   Dijkstra over a composite edge weight
+   (`fee_cents + latency_minutes * speed_weight * 10`), from
+   cost-first multi-hop FX to hybrid fiat → stablecoin bridges, with
+   cutoff/circuit-breaker exclusions and a runner-up failover quote.
 4. **Resilience & reconciliation** — per-rail circuit breakers with
    automatic failover, and balanced double-entry records.
 
@@ -37,6 +40,10 @@ lib/railsmith/
   compressed_settlement.rb  The surviving net movement per corridor
   netting_result.rb     Summaries + settlements + aggregate totals
   graph.rb          Graph container: adjacency, lookups, invariants
+  graph_router.rb   Stage 3: constrained Dijkstra, cost vs. speed
+  route_quote.rb    Priced multi-hop path (integer cents + ms)
+  route_result.rb   Optimal + runner-up quotes + exclusions
+  route_exclusion.rb / exclusion_reason.rb  Why a rail was skipped
   fixtures.rb       The 10-node / 22-rail demo network and the
                     120-instruction netting batch (match the UI)
 test/               Minitest suite
@@ -65,6 +72,15 @@ test/               Minitest suite
 - **Corridor strings match the UI** (`eu ↔ us · USD`), and netting is
   pure over `TransferIntent`s — no graph dependency, so compression
   runs before routing.
+- **Routing weights are scores, not money.** Dijkstra floats the
+  composite weight internally, but every reported fee and latency on
+  a `RouteQuote` stays integer cents / milliseconds. Quotes include
+  spread fees for the queried amount (not just fixed fees).
+- **Degraded rails cost double; broken ones are gone.** DEGRADED
+  routes at a 2x penalty, CIRCUIT_OPEN and past-cutoff rails are
+  excluded and reported on the result. The runner-up quote is the
+  best route with each winning edge removed in turn — the failover
+  path Stage 4 promotes.
 
 ## Verify
 
