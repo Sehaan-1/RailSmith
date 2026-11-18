@@ -38,6 +38,7 @@ class ApiTest < Minitest::Test
     assert_equal 10, data['nodes'].size
     assert_equal 22, data['edges'].size
     mint = data['edges'].find { |e| e['id'] == 'mint' }
+    assert_equal 920_000, data['edges'].find { |e| e['id'] == 'ach' }['fxRateScaled']
     assert_equal 'STABLECOIN_MINT', mint['railKind']
     assert_in_delta 0.375, mint['latencyMinutes'], 0.0001
     assert_equal 'HEALTHY', mint['health']
@@ -103,10 +104,13 @@ class ApiTest < Minitest::Test
       id: 'tr-1', sourceNodeId: 'us', targetNodeId: 'eu', amountCents: 2_500_000,
       currency: 'USD', edgeIds: %w[ach fx-sepa]
     }).body)
-    assert_equal 4, data['postings'].size
-    assert_equal 'tr-1:ach:debit', data['postings'].first['id']
+    assert_equal 6, data['postings'].size
+    assert_equal 'tr-1:ach:source-debit', data['postings'].first['id']
     assert data['balanced']
-    assert_equal({ 'USD' => { 'debit' => 5_000_000, 'credit' => 5_000_000 } }, data['totals'])
+    assert_equal({
+      'USD' => { 'debit' => 2_500_000, 'credit' => 2_500_000 },
+      'EUR' => { 'debit' => 4_600_000, 'credit' => 4_600_000 }
+    }, data['totals'])
   end
 
   def test_bad_requests_get_400

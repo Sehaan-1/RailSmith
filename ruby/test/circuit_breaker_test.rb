@@ -53,7 +53,7 @@ class CircuitBreakerTest < Minitest::Test
       amount_cents: 2_500_000, currency: RailSmith::Currency::USD
     )
     ledger = RailSmith::LedgerGenerator.generate(intent, after.optimal.path_edges)
-    assert_equal 6, ledger.size
+    assert_equal 12, ledger.size
     assert RailSmith::LedgerGenerator.balanced?(ledger)
   end
 
