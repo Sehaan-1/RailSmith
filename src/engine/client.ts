@@ -18,10 +18,13 @@ export interface EngineNet{mode:EngineMode;summaries:NettingSummary[]}
 export interface EngineLedger{mode:EngineMode;postings:readonly LedgerPosting[]}
 type ApiQuote=Omit<RouteQuote,'excludedEdges'>;
 
+const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+const apiUrl = (path: string) => `${API_BASE}${path}`;
+
 let probe:Promise<boolean>|null=null;
 /** One cached health probe; a later request failure flips the engine off. */
 export function engineAvailable():Promise<boolean>{
- if(!probe)probe=fetch('/api/health',{signal:AbortSignal.timeout(1500)}).then(r=>r.ok).catch(()=>false);
+ if(!probe)probe=fetch(apiUrl('/api/health'),{signal:AbortSignal.timeout(5000)}).then(r=>r.ok).catch(()=>false);
  return probe;
 }
 function markOffline(){probe=Promise.resolve(false)}
@@ -32,7 +35,7 @@ export interface EngineGraph {mode:EngineMode;accounts:AccountNode[];edges:RailE
 export async function engineGraph(fallbackAccounts:readonly AccountNode[],fallbackEdges:readonly RailEdge[]):Promise<EngineGraph>{
  if(await engineAvailable()){
   try{
-   const res=await fetch('/api/graph',{signal:AbortSignal.timeout(4000)});
+   const res=await fetch(apiUrl('/api/graph'),{signal:AbortSignal.timeout(5000)});
    if(!res.ok)throw new Error(`/api/graph answered ${res.status}`);
    const data=await res.json() as {nodes:AccountNode[];edges:RailEdge[]};
    return{mode:'ruby',accounts:data.nodes,edges:data.edges};
@@ -41,7 +44,7 @@ export async function engineGraph(fallbackAccounts:readonly AccountNode[],fallba
  return{mode:'typescript',accounts:[...fallbackAccounts],edges:[...fallbackEdges]};
 }
 async function post<T>(path:string,body:unknown):Promise<T>{
- const res=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(4000)});
+ const res=await fetch(apiUrl(path),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(5000)});
  if(!res.ok)throw new Error(`${path} answered ${res.status}`);
  return res.json() as Promise<T>;
 }

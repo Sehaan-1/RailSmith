@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: railsmith-engine
+    runtime: ruby
+    plan: free
+    region: oregon
+    rootDir: ruby
+    buildCommand: bundle install
+    startCommand: bundle exec ruby bin/railsmith-api
+    envVars:
+      - key: PORT
+        value: 10000

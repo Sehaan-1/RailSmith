@@ -54,17 +54,40 @@ module RailSmith
     private
 
     def mount_routes
-      @server.mount_proc('/api/health') do |_req, res|
-        respond(res, 200, ok: true, engine: "railsmith-ruby #{RailSmith::VERSION}")
+      @server.mount_proc('/api/health') do |req, res|
+        if req.request_method == 'OPTIONS'
+          cors_preflight(res)
+        else
+          respond(res, 200, ok: true, engine: "railsmith-ruby #{RailSmith::VERSION}")
+        end
       end
-      @server.mount_proc('/api/graph') { |_req, res| respond(res, 200, graph_json) }
+      @server.mount_proc('/api/graph') do |req, res|
+        if req.request_method == 'OPTIONS'
+          cors_preflight(res)
+        else
+          respond(res, 200, graph_json)
+        end
+      end
       @server.mount_proc('/api/route') { |req, res| handle(req, res) { |body| route_json(body) } }
       @server.mount_proc('/api/net') { |req, res| handle(req, res) { |body| net_json(body) } }
       @server.mount_proc('/api/ledger') { |req, res| handle(req, res) { |body| ledger_json(body) } }
       @server.mount_proc('/api/circuit-breaker') { |req, res| handle(req, res) { |body| circuit_breaker_json(body) } }
     end
 
+    def cors_preflight(res)
+      res.status = 204
+      res['Access-Control-Allow-Origin'] = '*'
+      res['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+      res['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+      res.body = ''
+    end
+
     def handle(req, res)
+      if req.request_method == 'OPTIONS'
+        cors_preflight(res)
+        return
+      end
+
       unless req.request_method == 'POST'
         respond(res, 405, error: 'POST required')
         return
@@ -81,6 +104,8 @@ module RailSmith
       res.status = status
       res['Content-Type'] = 'application/json'
       res['Access-Control-Allow-Origin'] = '*'
+      res['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+      res['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
       res.body = JSON.generate(payload)
     end
 

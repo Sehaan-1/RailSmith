@@ -85,6 +85,20 @@ npm run dev
 
 Open `http://localhost:5173`. Vite automatically proxies `/api` requests to the Ruby API. If Ruby is not running, the UI switches to the TypeScript fallback automatically.
 
+## Deploying to Cloud
+
+### 1. Deploy the Ruby Engine (Free on Render)
+
+Deploy the Sorbet-typed Ruby API backend as a free web service using the included `render.yaml` blueprint or Dockerfile:
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Sehaan-1/RailSmith)
+
+1. Click the **Deploy to Render** button above or connect your GitHub repository in [Render](https://render.com).
+2. Once deployed, Render provides your backend service URL (e.g. `https://railsmith-engine.onrender.com`).
+3. In your GitHub repository, navigate to **Settings > Secrets and variables > Actions > Variables** and set:
+   - `VITE_API_URL`: `https://your-backend.onrender.com`
+4. Re-running the GitHub Pages deployment will connect the live frontend directly to the remote Ruby service!
+
 ## Checks
 
 From the repository root:
