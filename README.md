@@ -1,5 +1,7 @@
 # RailSmith — GPTN Router
 
+> **Live Demo:** [https://sehaan-1.github.io/RailSmith/](https://sehaan-1.github.io/RailSmith/)
+
 RailSmith is an interactive multi-rail payments and FX routing workbench. It models accounts and settlement rails as a directed graph, compares optimal and alternate routes, simulates rail failures, and produces a balanced multi-currency ledger.
 
 ## Screenshots
